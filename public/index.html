@@ -1,0 +1,82 @@
+
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BoardRoom Online</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0f1117;color:#f5f6f8;font-family:Inter,system-ui,sans-serif}
+button,input{font:inherit}button{cursor:pointer}.wrap{max-width:1100px;margin:auto;padding:28px 18px}
+header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #292d38;padding:12px 0 20px}.logo{font-size:23px;font-weight:800}.logo i{color:#8e9cff;font-style:normal}.muted{color:#9ba2b1;font-size:14px}
+h1{font-size:42px;letter-spacing:-1.8px;margin:50px 0 10px}.sub{color:#aab0bd;max-width:650px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:30px}.card,.panel{background:#171a22;border:1px solid #303542;border-radius:18px;padding:20px}.card .icon{font-size:45px;height:90px;display:grid;place-items:center;background:#222632;border-radius:13px}.card h2{margin:17px 0 5px}.card p{color:#9ba2b1;min-height:45px}.btn{width:100%;padding:12px;border-radius:10px;background:#8e9cff;color:#11131a;font-weight:800}.btn.alt{background:#292e3a;color:#fff}.row{display:flex;gap:10px;margin-top:12px}.row .btn{width:auto;flex:1}.input{width:100%;padding:12px;border:1px solid #383e4c;background:#0f1117;color:#fff;border-radius:10px;margin-top:9px}.hidden{display:none!important}
+.room{margin-top:30px}.top{display:flex;justify-content:space-between;align-items:center}.layout{display:grid;grid-template-columns:1fr 300px;gap:16px;margin-top:18px}.board{min-height:520px}.players{margin-bottom:16px}.player{padding:9px;border-bottom:1px solid #292d38;display:flex;justify-content:space-between}.turn{padding:12px;background:#202532;border-radius:10px;margin:15px 0}.actions{display:flex;gap:10px;flex-wrap:wrap}.actions button{padding:11px 14px;border-radius:10px;background:#292e3a;color:#fff}.actions button.primary{background:#8e9cff;color:#11131a}.chatlog{height:190px;overflow:auto;color:#aab0bd;font-size:14px}.chatrow{display:flex;gap:7px}.chatrow .input{margin:0}.note{padding:15px;border-radius:12px;background:#20232d;color:#b9bfcb;line-height:1.5}.tilegrid{display:grid;grid-template-columns:repeat(5,55px);gap:5px;justify-content:center;margin:25px 0}.tile{width:55px;height:55px;border:1px solid #444a58;border-radius:7px;background:#242936;display:grid;place-items:center;font-size:25px}.tile.placed{background:#30394a}.cards{display:flex;gap:12px;justify-content:center;margin:25px 0}.miniCard{width:100px;height:140px;border-radius:10px;background:#252b39;border:1px solid #4a5262;display:grid;place-items:center;font-size:34px}.miniCard.flipped{background:#e8e9ec;color:#111}.modal{position:fixed;inset:0;background:#000a;display:grid;place-items:center;padding:20px}.modal .panel{width:min(450px,100%)}@media(max-width:780px){.grid,.layout{grid-template-columns:1fr}h1{font-size:34px}.top{align-items:flex-start;gap:10px}.tilegrid{grid-template-columns:repeat(5,45px)}.tile{width:45px;height:45px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div class="logo">Board<i>Room</i></div><div class="muted" id="connection">● не подключено</div></header>
+
+<section id="home">
+<h1>Играйте вместе.<br>Прямо в браузере.</h1>
+<div class="sub">Создайте комнату, отправьте друзьям код и играйте. Сейчас это онлайн-версия с синхронизацией комнат, ходов и чата; игровые правила можно расширять отдельно для каждой игры.</div>
+<div class="grid">
+<div class="card"><div class="icon">🃏</div><h2>Переворот</h2><p>Карточный режим-прототип.</p><button class="btn" onclick="openCreate('Переворот')">Создать</button></div>
+<div class="card"><div class="icon">⚔️</div><h2>Орифламма</h2><p>Тактический режим-прототип.</p><button class="btn" onclick="openCreate('Орифламма')">Создать</button></div>
+<div class="card"><div class="icon">🏰</div><h2>Каркассон</h2><p>Поле с тайлами — прототип.</p><button class="btn" onclick="openCreate('Каркассон')">Создать</button></div>
+</div>
+<div class="panel" style="margin-top:16px"><b>Уже есть код?</b><div class="row"><input class="input" id="joinCode" placeholder="например A1B2C3"><input class="input" id="joinName" placeholder="Ваше имя"><button class="btn" onclick="join()">Войти</button></div></div>
+</section>
+
+<section id="room" class="room hidden">
+<div class="top"><div><div class="muted">КОМНАТА <b id="code"></b></div><h2 id="game"></h2></div><button class="btn alt" style="width:auto" onclick="location.reload()">Выйти</button></div>
+<div class="layout">
+<div class="panel"><div id="gameArea"></div></div>
+<aside><div class="panel players"><b>Игроки</b><div id="players"></div><div class="turn" id="turn"></div><button class="btn primary" id="start" onclick="startGame()">Начать игру</button></div>
+<div class="panel"><b>Чат</b><div class="chatlog" id="chat"></div><div class="chatrow"><input class="input" id="chatInput" placeholder="Сообщение"><button class="btn" style="width:auto" onclick="chat()">→</button></div></div></aside>
+</div></section>
+</div>
+
+<div class="modal hidden" id="modal"><div class="panel"><h2>Создать комнату</h2><div class="muted" id="selected"></div><input class="input" id="createName" value="Игрок"><div class="row"><button class="btn" onclick="create()">Создать</button><button class="btn alt" onclick="closeModal()">Отмена</button></div></div></div>
+
+<script>
+let ws, selected="Переворот", me="", state=null;
+function connect(){
+ ws=new WebSocket((location.protocol==="https:"?"wss://":"ws://")+location.host);
+ ws.onopen=()=>document.getElementById("connection").textContent="● подключено";
+ ws.onclose=()=>document.getElementById("connection").textContent="● соединение потеряно";
+ ws.onmessage=e=>handle(JSON.parse(e.data));
+}
+connect();
+function send(x){if(ws&&ws.readyState===1)ws.send(JSON.stringify(x))}
+function openCreate(g){selected=g;document.getElementById("selected").textContent="Игра: "+g;document.getElementById("modal").classList.remove("hidden")}
+function closeModal(){document.getElementById("modal").classList.add("hidden")}
+function create(){send({type:"create",game:selected,name:document.getElementById("createName").value||"Игрок"});closeModal()}
+function join(){send({type:"join",code:document.getElementById("joinCode").value,name:document.getElementById("joinName").value||"Игрок"})}
+function startGame(){send({type:"start"})}
+function next(){send({type:"nextTurn"})}
+function score(d){send({type:"score",delta:d})}
+function chat(){let i=document.getElementById("chatInput");if(i.value.trim())send({type:"chat",text:i.value.trim()});i.value=""}
+function handle(m){
+ if(m.type==="created"||m.type==="joined"){me=m.id}
+ if(m.type==="error"){alert(m.message);return}
+ if(m.type==="state"){state=m.room;document.getElementById("home").classList.add("hidden");document.getElementById("room").classList.remove("hidden");render()}
+ if(m.type==="chat"){let c=document.getElementById("chat");c.innerHTML+=`<div><b>${esc(m.name)}:</b> ${esc(m.text)}</div>`;c.scrollTop=c.scrollHeight}
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function render(){
+ document.getElementById("code").textContent=state.code;document.getElementById("game").textContent=state.game;
+ document.getElementById("players").innerHTML=state.players.map((p,i)=>`<div class="player"><span>${esc(p.name)}${p.id===me?" · вы":""}</span><b>${p.score}</b></div>`).join("");
+ document.getElementById("turn").textContent=state.started?"Ход: "+state.players[state.turn]?.name:"Игра ещё не началась";
+ document.getElementById("start").classList.toggle("hidden",state.started||state.host!==me);
+ document.getElementById("gameArea").innerHTML=gameMarkup();
+}
+function gameMarkup(){
+ if(!state.started)return `<div class="note"><b>Комната готова.</b><br>Подождите друзей и нажмите «Начать игру». Код комнаты: <b>${state.code}</b></div>`;
+ if(state.game==="Каркассон")return `<h3>Каркассон · поле-прототип</h3><div class="tilegrid">${Array.from({length:25},(_,i)=>`<button class="tile ${i===12?"placed":""}" onclick="score(1)">${i===12?"🏰":"+"}</button>`).join("")}</div><div class="actions"><button class="primary" onclick="next()">Закончить ход</button><button onclick="score(1)">+1 очко</button></div><p class="muted">Тайлы и подсчёт очков здесь упрощены. Официальные правила можно реализовать отдельным этапом.</p>`;
+ if(state.game==="Орифламма")return `<h3>Орифламма · карточный прототип</h3><div class="cards">${[1,2,3].map(x=>`<button class="miniCard" onclick="this.classList.toggle('flipped');score(1)">?</button>`).join("")}</div><div class="actions"><button class="primary" onclick="next()">Закончить ход</button></div><p class="muted">Карты и эффекты пока демонстрационные.</p>`;
+ return `<h3>Переворот · карточный прототип</h3><div class="cards">${[1,2,3].map(x=>`<button class="miniCard" onclick="this.classList.toggle('flipped');score(1)">↕</button>`).join("")}</div><div class="actions"><button class="primary" onclick="next()">Закончить ход</button><button onclick="score(1)">+1</button><button onclick="score(-1)">−1</button></div><p class="muted">Это базовый движок комнаты; точные карты и правила игры добавляются следующим этапом.</p>`;
+}
+</script>
+</body>
+</html>
